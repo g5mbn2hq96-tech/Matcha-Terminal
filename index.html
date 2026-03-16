@@ -143,11 +143,12 @@ window.addEventListener("unhandledrejection", function(e) {
   if(el) { el.style.display="block"; el.textContent += "\nPROMISE ERROR: " + e.reason; }
 });
 // Confirm JS is running at all
-document.addEventListener("DOMContentLoaded", function() {
+// Show confirmation immediately
+(function(){
   var el = document.getElementById("js-error");
-  if(el) { el.style.display="block"; el.style.color="#4EEFC4"; el.style.background="#001a0a"; el.textContent = "✓ JavaScript is running. DOMContentLoaded fired."; }
+  if(el) { el.style.display="block"; el.style.color="#4EEFC4"; el.style.background="#001a0a"; el.textContent = "✓ JavaScript is running. Buttons are ready."; }
   setTimeout(function() { if(el) el.style.display="none"; }, 3000);
-});
+})();
 const TICKERS=[
   {sym:"SPX",val:"6,632.2",chg:"-0.61%",up:false},{sym:"NDX",val:"22,105",chg:"-0.93%",up:false},
   {sym:"DJI",val:"46,558",chg:"-0.26%",up:false},{sym:"BTC/USD",val:"71,799",chg:"+1.79%",up:true},
@@ -330,7 +331,8 @@ updateClocks();
 setInterval(updateClocks,1000);
 
 // Attach events after DOM ready
-document.addEventListener(“DOMContentLoaded”,function(){
+// Script is at bottom of body so DOM is already ready — attach directly
+(function(){
 var connectBtn=document.getElementById(“connect-btn”);
 var skipBtn=document.getElementById(“skip-btn”);
 var apiField=document.getElementById(“api-input-field”);
@@ -339,7 +341,7 @@ if(connectBtn)connectBtn.addEventListener(“click”,function(){connect();});
 if(skipBtn)skipBtn.addEventListener(“click”,function(){connect(””);});
 if(apiField)apiField.addEventListener(“keydown”,function(e){if(e.key===“Enter”)connect();});
 if(refreshBtn)refreshBtn.addEventListener(“click”,function(){doRefresh().catch(function(){});});
-});
+})();
 </script>
 
 </body>
