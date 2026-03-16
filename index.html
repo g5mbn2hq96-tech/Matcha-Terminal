@@ -120,6 +120,7 @@
     <div id="spinner">
       <div class="ring"></div>
       <div style="font-family:'Syne',sans-serif;font-size:10px;color:#3A4A65;letter-spacing:0.18em;animation:shimmer 1.5s infinite">CONNECTING TO WIRE SERVICES...</div>
+      <div id="connect-status" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#2DD4BF;letter-spacing:0.08em;margin-top:4px"></div>
       <div style="font-family:'Lora',serif;font-size:12px;color:#3A4A65;font-style:italic;opacity:0.4">Marina Bay · Singapore</div>
     </div>
     <div id="cards"></div>
@@ -185,13 +186,18 @@ id:“d”+i+Date.now(),headline:d.h,category:getCategory(d.h),sentiment:getSent
 timestamp:new Date(Date.now()-i*48000),isNew:i<3,source:d.s,
 }));
 }
+function setStatus(msg){const el=document.getElementById(“connect-status”);if(el)el.textContent=msg;}
+
 async function fetchNews(){
-if(!apiKey||!apiKey.trim())return makeDemo();
+if(!apiKey||!apiKey.trim()){setStatus(“No key — loading demo”);return makeDemo();}
 try{
+setStatus(“Contacting Finnhub…”);
 const r=await fetch(“https://finnhub.io/api/v1/news?category=general&token=”+apiKey.trim());
-if(!r.ok)return makeDemo();
+setStatus(“Response: HTTP “+r.status);
+if(!r.ok){setStatus(“HTTP “+r.status+” — loading demo”);return makeDemo();}
 const d=await r.json();
-if(!Array.isArray(d)||!d.length)return makeDemo();
+if(!Array.isArray(d)||!d.length){setStatus(“Empty response — loading demo”);return makeDemo();}
+setStatus(“Got “+d.length+” items from Finnhub!”);
 const items=d.slice(0,25).map(n=>({
 id:String(n.id||Math.random()),headline:n.headline||n.summary||””,
 category:getCategory(n.headline||””),sentiment:getSent(n.headline||””),
@@ -199,7 +205,7 @@ timestamp:n.datetime?new Date(n.datetime*1000):new Date(),
 isNew:true,source:(n.source||“WIRE”).toUpperCase().slice(0,22),
 })).filter(n=>n.headline.length>20);
 return items.length?items:makeDemo();
-}catch(e){return makeDemo();}
+}catch(e){setStatus(“Error: “+e.message+” — loading demo”);return makeDemo();}
 }
 
 function ageStr(ts){
@@ -276,10 +282,17 @@ document.getElementById(“refresh-btn”).style.display=“flex”;
 document.getElementById(“sent-row”).style.display=“flex”;
 document.getElementById(“statusbar”).style.display=“flex”;
 document.getElementById(“filters”).style.display=“flex”;
+try{
 await doRefresh();
+}catch(err){
+setStatus(“Unexpected error: “+err.message);
+// load demo anyway
+news=makeDemo();
+renderCards();
+}
 document.getElementById(“spinner”).style.display=“none”;
 if(rtimer)clearInterval(rtimer);
-rtimer=setInterval(doRefresh,60000);
+rtimer=setInterval(()=>{doRefresh().catch(()=>{});},60000);
 if(ctimer)clearInterval(ctimer);
 ctimer=setInterval(()=>{
 countdown=countdown<=1?60:countdown-1;
